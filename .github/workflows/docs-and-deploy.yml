@@ -1,0 +1,53 @@
+name: Documentação e Deploy
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+jobs:
+  generate-docs:
+    name: Gerar Documentação API
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Install TypeDoc
+        run: npm install --no-save typedoc
+        
+      - name: Create Docs Folder
+        run: mkdir -p ./docs
+        
+      - name: Generate documentation
+        run: npx typedoc --out docs src/ --name "AbacatePay NodeJS SDK" --includeVersion
+        
+      - name: Verify Docs Folder
+        run: ls -la ./docs
+        
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          name: github-pages
+          path: ./docs
+          
+  deploy:
+    needs: generate-docs
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

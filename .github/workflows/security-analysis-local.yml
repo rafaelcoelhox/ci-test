@@ -1,0 +1,62 @@
+name: Security Analysis (Local Only)
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    - cron: '0 8 * * 1' # Executa toda segunda-feira às 8h UTC
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+  
+jobs:
+  codeql-analysis:
+    name: CodeQL Analysis
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: javascript
+          
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
+  
+  npm-audit:
+    name: NPM Audit
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Run npm audit
+        run: npm audit --audit-level=high
+        continue-on-error: true # Para não falhar o build em vulnerabilidades de baixa severidade
+        
+      - name: Generate audit report
+        run: npm audit --json > npm-audit-report.json
+        continue-on-error: true
+        
+      - name: Upload audit report
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: npm-audit-report
+          path: npm-audit-report.json
+
