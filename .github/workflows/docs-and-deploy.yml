@@ -8,9 +8,14 @@ permissions:
   pages: write
   id-token: write
 jobs:
-  generate-docs:
-    name: Gerar Documentação API
+  build-and-deploy:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    concurrency:
+      group: "pages"
+      cancel-in-progress: false
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -29,6 +34,9 @@ jobs:
       - name: Create Docs Folder
         run: mkdir -p ./docs
         
+      - name: Create .nojekyll file
+        run: touch ./docs/.nojekyll
+        
       - name: Generate documentation
         run: npx typedoc --out docs src/ --name "AbacatePay NodeJS SDK" --includeVersion
         
@@ -41,16 +49,8 @@ jobs:
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          name: github-pages
           path: ./docs
           
-  deploy:
-    needs: generate-docs
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v2
+        uses: actions/deploy-pages@v4
