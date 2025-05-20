@@ -5,8 +5,8 @@ on:
   workflow_dispatch:
 permissions:
   contents: write
-  pages: write      # Necessário para deploy no GitHub Pages
-  id-token: write   # Necessário para verificação OIDC do deployment
+  pages: write
+  id-token: write
 jobs:
   generate-docs:
     name: Gerar Documentação API
@@ -36,27 +36,21 @@ jobs:
         run: ls -la ./docs
         
       - name: Setup Pages
-        uses: actions/configure-pages@v4
+        uses: actions/configure-pages@v3
         
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v4
+        uses: actions/upload-pages-artifact@v3
         with:
-          # Deve ser github-pages para compatibilidade com deploy-pages
           name: github-pages
           path: ./docs
           
   deploy:
     needs: generate-docs
     runs-on: ubuntu-latest
-    # Configuração de ambiente para deploy no GitHub Pages
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
-        # Parâmetros opcionais:
-        # with:
-        #   timeout: 600000  # 10 minutos (padrão)
-        #   error_count: 10  # Número máximo de erros (padrão)
+        uses: actions/deploy-pages@v2
